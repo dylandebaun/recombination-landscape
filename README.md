@@ -1,6 +1,8 @@
 # recombination-landscape
 Preparing VCF and running ReLERNN
 
+Optimally, you have many whole genome sequence data for individuals from a single panmictic population mapping to a closely related reference genome (conspecific is best). 
+
 ### 1. For each indiviudal, run haplotypecaller using GATK to produce a GVCF file
 
 ```
