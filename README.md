@@ -93,12 +93,34 @@ Some sites of the reference genome may never be mapped to across your samples. H
 
 ```
 vcftools --vcf Leiomod_allsites.vcf.gz --site-mean-depth --out Leiomod_depth
-vcftools --vcf Leiomod_allsites.vcf.gz --site-quality --out Leiomod
+bcftools query -f '%CHROM\t%POS\t%POS[\t%GQ]\n' Leiomod_allsites.vcf.gz \
+  | awk '{
+      sum=0; n=0;
+      for (i=4; i<=NF; i++) {
+          if ($i != "." && $i != "") { sum+=$i; n++ }
+      }
+      if (n>0) {
+          mean=sum/n;
+          print $1, $2-1, $2, mean
+      }
+  }' OFS='\t' > Leiomod_site_meanGQ.bed
 
+bcftools query -f '%CHROM\t%POS\t%POS[\t%RGQ]\n' Leiomod_allsites.vcf.gz \
+  | awk '{
+      sum=0; n=0;
+      for (i=4; i<=NF; i++) {
+          if ($i != "." && $i != "") { sum+=$i; n++ }
+      }
+      if (n>0) {
+          mean=sum/n;
+          print $1, $2-1, $2, mean
+      }
+  }' OFS='\t' > Leiomod_site_meanRGQ.bed
+
+cat Leiomod_site_meanGQ.bed Leiomod_site_meanRGQ.bed | sort -k 1,1 -k2,2n | bedtools merge > Leiomod_lowgq.bed
 awk '$4 < 5 {print $1"\t"$2-1"\t"$2}' Leiomod_depth.ldepth.mean > Leiomod_lowdepth.bed
-awk '$3 < 30 {print $1"\t"$2-1"\t"$2}' Leiomod.lqual > Leiomod_lowqual.bed
 
-cat Leiomod_lowdepth.bed Leiomod_lowqual.bed | sort -k 1,1 -k2,2n | bedtools merge > Leiomod.mask
+cat Leiomod_lowdepth.bed Leiomod_lowgq.bed | sort -k 1,1 -k2,2n | bedtools merge > Leiomod.mask
 ```
 
 
